@@ -1,0 +1,76 @@
+﻿@page "/orders"
+@using GridBlazor;
+@using GridBlazor.Pages
+@using GridBlazorDropDown.Data
+@using GridBlazorDropDown.Pages.Components;
+@using GridShared
+@using GridShared.Utility
+@using Microsoft.Extensions.Primitives
+@using System.Threading.Tasks
+
+@inject OrderService orderService
+@inject CustomerService customerService
+
+@if (_task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent T="Order" Grid="@_grid" @ref="_gridComponent" Mode="_mode" Keys="_keys"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code
+    {
+    private CGrid<Order> _grid;
+    private GridComponent<Order> _gridComponent;
+    private object[] _keys;
+    private GridMode _mode;
+    private Task _task;
+
+    private static Func<Order, string?> exprIdValue = (s) => { return s.Customer == null ? "" : s.Customer?.Name; };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Action<IGridColumnCollection<Order>> columns = c =>
+        {
+            c.Add(o => o.OrderId).SetPrimaryKey(true);
+            c.Add(o => o.Description);
+            c.Add(o => o.Amount).Format("{0:#,0.00}");
+            c.Add(o => o.IsPriority);
+
+        c.Add(o => o.CustomerId, true).SetSelectField(true, o => o.Customer.Name, customerService.Get);
+        c.Add(o => o.Customer.Name).SetCrudHidden(true);
+
+        //c.Add(o => o.CustomerId).Titled("Customer")
+        //                        .RenderValueAs(o => o.Customer.Name)
+        //                        .RenderCrudComponentAs<RemoteDropDownComponent<Customer, Customer>>(("CustomerId", exprIdValue), false);
+
+        };
+
+        var query = new QueryDictionary<StringValues>();
+        query.Add("grid-page", "1");
+
+        var client = new GridClient<Order>(q => orderService.Get(columns, q), query, false, "ordersGrid", columns)
+        .Crud(true, orderService)
+        .SetHeaderCrudButtons(true)
+        .Sortable()
+        .Filterable()
+        .WithMultipleFilters()
+        .ClearFiltersButton(true)
+        .Selectable(true, true, false)
+        .SetExcelExport(true, true, "Orders")
+        .SetStriped(true)
+        .SetTableLayout(TableLayout.Fixed, null, "600px");
+
+        _grid = client.Grid;
+
+        // Set new items to grid
+        _task = client.UpdateGrid();
+        await _task;
+    }
+}

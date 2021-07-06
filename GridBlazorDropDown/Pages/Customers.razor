@@ -1,0 +1,64 @@
+﻿@page "/customers"
+@using GridBlazor;
+@using GridBlazor.Pages
+@using GridBlazorDropDown.Data
+@using GridShared
+@using GridShared.Utility
+@using Microsoft.Extensions.Primitives
+@using System.Threading.Tasks
+
+@inject CustomerService customerService
+
+@if (_task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent T="Customer" Grid="@_grid" @ref="_gridComponent" Mode="_mode" Keys="_keys"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code
+    {
+    private CGrid<Customer> _grid;
+    private GridComponent<Customer> _gridComponent;
+    private object[] _keys;
+    private GridMode _mode;
+    private Task _task;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Action<IGridColumnCollection<Customer>> columns = c =>
+        {
+            c.Add(o => o.CustomerId).SetPrimaryKey(true);
+            c.Add(o => o.Name);
+            c.Add(o => o.Remark);
+        };
+
+        var query = new QueryDictionary<StringValues>();
+        query.Add("grid-page", "1");
+
+        var client = new GridClient<Customer>(q => customerService.Get(columns, q), query, false, "customersGrid", columns)
+        .Crud(true, customerService)
+        .SetHeaderCrudButtons(true)
+        .Sortable()
+        .Filterable()
+        .WithMultipleFilters()
+        .ClearFiltersButton(true)
+        .WithGridItemsCount()
+        .Selectable(true, true, false)
+        .SetExcelExport(true, true, "Customers")
+        .SetStriped(true)
+        .SetTableLayout(TableLayout.Fixed, null, "600px");
+
+        _grid = client.Grid;
+
+        // Set new items to grid
+        _task = client.UpdateGrid();
+        await _task;
+    }
+}
