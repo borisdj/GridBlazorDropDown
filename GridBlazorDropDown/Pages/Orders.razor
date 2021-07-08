@@ -8,8 +8,8 @@
 @using Microsoft.Extensions.Primitives
 @using System.Threading.Tasks
 
-@inject OrderService orderService
-@inject CustomerService customerService
+@inject IGenericService<Order> orderService
+@inject IGenericService<Customer> customerService
 
 @if (_task.IsCompleted)
 {
@@ -43,13 +43,11 @@ else
             c.Add(o => o.Amount).Format("{0:#,0.00}");
             c.Add(o => o.IsPriority);
 
-        c.Add(o => o.CustomerId, true).SetSelectField(true, o => o.Customer.Name, customerService.Get);
-        c.Add(o => o.Customer.Name).SetCrudHidden(true);
+            c.Add(o => o.Customer.Name).SetCrudHidden(true);
 
-        //c.Add(o => o.CustomerId).Titled("Customer")
-        //                        .RenderValueAs(o => o.Customer.Name)
-        //                        .RenderCrudComponentAs<RemoteDropDownComponent<Customer, Customer>>(("CustomerId", exprIdValue), false);
-
+            //c.Add(o => o.CustomerId, true).SetSelectField(true, o => o.Customer.Name, customerService.GetSelect); // Select Combo for Customer
+            //c.Add(o => o.CustomerId, true).RenderCrudComponentAs<CustomerLookupComponent>(); // CustomerLookup Combo
+            c.Add(o => o.CustomerId, true).RenderCrudComponentAs<RemoteDropDownComponent<Order, Customer>>(("CustomerId", exprIdValue), false);//.RenderValueAs(o => o.CustomerId == 0 ? "" : o.Customer.Name); // Generic Lookup Combo applied for Customer
         };
 
         var query = new QueryDictionary<StringValues>();

@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace GridBlazorDropDown.Pages.Components
 {
-    public partial class RemoteDropDownComponent2<T, V> : ICustomGridComponent<T> where V : class//, IGenericModel
+    public partial class RemoteDropDownComponent<T, V> : ICustomGridComponent<T> where V : class//, IGenericModel
     {
         [Parameter]
         public T Item { get; set; }
@@ -21,13 +21,13 @@ namespace GridBlazorDropDown.Pages.Components
         public object Object { get; set; }
 
         [Inject]
-        private OrderService OrderService { get; set; }
+        private IGenericService<V> IGenericService { get; set; }
 
         public IEnumerable<SelectItem> SelectedItems;
         public string selectedValue;
         private string searchTerm;
         public bool allowChange;
-        private string _ValField;
+        private string _foreignKeyField;
         private string _message;
         private Func<T, string?> _expr;
         private ModelExtension Model { get; set; }
@@ -38,15 +38,15 @@ namespace GridBlazorDropDown.Pages.Components
             set { searchTerm = value; OnSearchChange(); }
         }
 
-        protected /*override*/ void OnParametersSet()
+        protected override void OnParametersSet()
         {
             if (Object.GetType() == typeof((string, Func<T, string?>)))
             {
-                (_ValField, _expr) = ((string, Func<T, string?>))Object;
+                (_foreignKeyField, _expr) = ((string, Func<T, string?>))Object;
                 try
                 {
                     Model = new ModelExtension(typeof(T), Item);
-                    selectedValue = Model.GetValue($"{_ValField}")?.ToString() ?? "";
+                    selectedValue = Model.GetValue($"{_foreignKeyField}")?.ToString() ?? "";
                     SearchTerm = _expr(Item) ?? "";
                 }
                 catch (Exception e)
@@ -59,20 +59,23 @@ namespace GridBlazorDropDown.Pages.Components
             allowChange = Grid.Mode == GridMode.Update || Grid.Mode == GridMode.Create;
             if (!allowChange)
             {
-                selectedValue = String.Concat(Model.GetValue($"{_ValField}")?.ToString(), " - ", _expr(Item));
+                selectedValue = String.Concat(Model.GetValue($"{_foreignKeyField}")?.ToString(), " - ", _expr(Item));
             }
         }
 
         public void OnSearchChange()
         {
-            SelectedItems = OrderService.Get(searchTerm).GetAwaiter().GetResult();
-            _message = $"selezionare... [{SelectedItems.Count()}]";
+            SelectedItems = IGenericService.GetSelect(searchTerm);
+            _message = "-";// $"to select... [{SelectedItems.Count()}]";
         }
 
         private void ChangeValue(ChangeEventArgs e)
         {
             var value = e?.Value?.ToString();
-            Model.SetValue($"{_ValField}", value);
+            if (value != "")
+            {
+                Model.SetValue($"{_foreignKeyField}", value);
+            }
         }
     }
 }

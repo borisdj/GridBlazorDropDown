@@ -1,0 +1,61 @@
+﻿@using GridBlazor;
+@using GridBlazor.Pages;
+@using GridShared;
+@using GridShared.Columns;
+@using GridBlazorDropDown.Data;
+@using GridBlazorDropDown.Pages.Components;
+@using Microsoft.Extensions.Primitives
+@using System.Threading.Tasks
+
+@implements ICustomGridComponent<Order>
+@*see Grid.Blazor\GridBlazor\Pages\GridUpdateComponent.razor*@
+
+<select id="CustomerId" name="CustomerId" class="form-control" value="@selectedValue" @onchange="(e) => ChangeValue(e)">
+    <option value="">select...</option>
+    @foreach (var selectItem in SelectedItems)
+    {
+        if (selectItem.Value == selectedValue)
+        {
+            <option value="@selectItem.Value" selected="selected">@selectItem.Title</option>
+        }
+        else
+        {
+            <option value="@selectItem.Value">@selectItem.Title</option>
+        }
+    }
+</select>
+<div class="col-md-5">search: <input class="form-control " @bind="SearchTerm" /></div>
+
+@code {
+
+    [Parameter]
+    public Order Item { get; set; }
+
+    [Inject]
+    private IGenericService<Customer> CustomerService { get; set; }
+
+    public IEnumerable<SelectItem> SelectedItems;
+    public string selectedValue;
+    private string searchTerm;
+    public string SearchTerm
+    {
+        get { return searchTerm; }
+        set { searchTerm = value; OnStartChange(); }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        selectedValue = Item.Customer?.Name ?? "";
+        SearchTerm = Item.Customer == null ? "" : Item.Customer?.Name?.Trim();
+    }
+    public void OnStartChange()
+    {
+        SelectedItems = CustomerService.GetSelect(searchTerm);
+    }
+
+    private void ChangeValue(ChangeEventArgs e)
+    {
+        var value = e.Value.ToString();
+        Item.CustomerId = Int32.Parse(value);
+    }
+}

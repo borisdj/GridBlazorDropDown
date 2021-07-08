@@ -42,12 +42,15 @@ namespace GridBlazorDropDown
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
-            services.AddSingleton<WeatherForecastService>();
-
-            services.AddSingleton<OrderService>();
-            services.AddSingleton<CustomerService>();
 
             services.AddScoped<IDbInitializer, DbInitializer>();
+
+            services.AddSingleton<WeatherForecastService>();
+
+            //services.AddSingleton<OrderService>();
+            //services.AddSingleton<CustomerService>();
+            services.AddSingleton<IGenericService<Order>, OrderService>();
+            services.AddSingleton<IGenericService<Customer>, CustomerService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

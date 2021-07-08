@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace GridBlazorDropDown.Data
 {
-    public class OrderService : ICrudDataService<Order>
+    public class OrderService : IGenericService<Order>
     {
         public ItemsDTO<Order> Get(Action<IGridColumnCollection<Order>> columns, QueryDictionary<StringValues> query) // GRID
         {
             using var context = new ApplicationDbContext(ApplicationDbContext.GetOptions());
 
             var q = context.Orders.AsQueryable().Include(a => a.Customer);
-            int pageSize = 20;
+            int pageSize = 50;
 
             var server = new GridServer<Order>(q, new QueryCollection(query), true, "ordersGrid", columns, pageSize)
                 .Sortable()
@@ -29,25 +29,21 @@ namespace GridBlazorDropDown.Data
             return server.ItemsToDisplay;
         }
 
-        public async Task<IEnumerable<SelectItem>> Get() // DropDown
+        public IEnumerable<SelectItem> GetSelect()
         {
-            using var context = new ApplicationDbContext(ApplicationDbContext.GetOptions());
-
-            var q = context.Orders.AsNoTracking();
-            var records = await q.Select(a => new SelectItem(a.OrderId.ToString(), a.Description)).ToListAsync();
-            return records;
+            return GetSelect(null);
         }
 
-        public async Task<IEnumerable<SelectItem>> Get(string search) // DropDown search
+        public IEnumerable<SelectItem> GetSelect(string search) // DropDown
         {
             using var context = new ApplicationDbContext(ApplicationDbContext.GetOptions());
 
             var q = context.Orders.AsNoTracking();
-            if (String.IsNullOrWhiteSpace(search))
+            if (!String.IsNullOrWhiteSpace(search))
             {
                 q = q.Where(a => a.Description.Contains(search));
             }
-            var records = await q.Select(a => new SelectItem(a.OrderId.ToString(), a.Description)).ToListAsync();
+            var records = q.Take(50).Select(a => new SelectItem(a.OrderId.ToString(), a.Description)).ToList();
             return records;
         }
 
@@ -74,7 +70,7 @@ namespace GridBlazorDropDown.Data
         {
             using var context = new ApplicationDbContext(ApplicationDbContext.GetOptions());
 
-            var record = await context.Orders.Include(a => a.Customer).AsNoTracking().SingleOrDefaultAsync(a => a.OrderId == item.OrderId);
+            var record = await context.Orders.Include(a => a.Customer).SingleOrDefaultAsync(a => a.OrderId == item.OrderId);
             record.Description = item.Description;
             record.IsPriority = item.IsPriority;
             record.Amount = item.Amount;

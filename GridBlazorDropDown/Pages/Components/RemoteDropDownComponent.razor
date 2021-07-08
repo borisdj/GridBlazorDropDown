@@ -1,0 +1,45 @@
+﻿@typeparam T
+@typeparam V
+
+@using GridBlazor;
+@using GridBlazor.Pages
+@using GridBlazorDropDown.Data
+@using GridBlazorDropDown.Pages.Components;
+@using GridShared
+@using GridShared.Utility
+@using Microsoft.Extensions.Primitives
+@using System.Threading.Tasks
+
+<style>
+    .row > div.col-md-10 > div.card.panel.panel-default {
+        border: none
+    }
+    .row > div.col-md-10 > div.card.panel.panel-default > div.card-body.panel-body {
+        padding: 0px;
+        border: none
+    }
+</style>
+@if (@allowChange)
+{
+    <div class="row col-md-5">Search: <input class="form-control " @bind="SearchTerm" /></div>
+    <div class="row col-md-5">
+        <select id="Select_@_foreignKeyField" name="@_foreignKeyField" class="form-control" value="@selectedValue" @onchange="(e) => ChangeValue(e)">
+            <option value="">@_message</option>
+            @foreach (var selectItem in SelectedItems)
+            {
+            if (selectItem.Value == selectedValue)
+            {
+            <option value="@selectItem.Value" selected="selected">@selectItem.Title</option>
+            }
+            else
+            {
+            <option value="@selectItem.Value">@selectItem.Title</option>
+            }
+            }
+        </select>
+    </div>
+}
+else
+{
+    <input id="@_foreignKeyField" name="@_foreignKeyField" class="form-control" value="@selectedValue" disabled="disabled" />
+}

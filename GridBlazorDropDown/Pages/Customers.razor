@@ -7,7 +7,7 @@
 @using Microsoft.Extensions.Primitives
 @using System.Threading.Tasks
 
-@inject CustomerService customerService
+@inject IGenericService<Customer> customerService
 
 @if (_task.IsCompleted)
 {
